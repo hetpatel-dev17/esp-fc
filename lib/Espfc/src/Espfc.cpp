@@ -5,7 +5,7 @@
 namespace Espfc {
 
 Espfc::Espfc():
-  _hardware{_model}, _controller{_model}, _telemetry{_model}, _input{_model, _telemetry}, _actuator{_model}, _sensor{_model},
+  _hardware{_model}, _controller{_model}, _telemetry{_model}, _input{_model, _telemetry}, _actuator{_model}, _gpsRescue{_model}, _sensor{_model},
   _mixer{_model}, _blackbox{_model}, _buzzer{_model}, _serial{_model, _telemetry}
   {}
 
@@ -29,6 +29,7 @@ int Espfc::begin()
   _sensor.begin();      // requires _hardware.begin()
   _input.begin();       // requires _serial.begin()
   _actuator.begin();    // requires _model.begin()
+  _gpsRescue.begin();
   _controller.begin();
   _blackbox.begin();    // requires _serial.begin(), _actuator.begin()
   _buzzer.begin();
@@ -60,6 +61,7 @@ int FAST_CODE_ATTR Espfc::update(bool externalTrigger)
   if(_model.state.actuatorTimer.check())
   {
     _actuator.update();
+    _gpsRescue.update();
   }
 
 #else
@@ -80,6 +82,7 @@ int FAST_CODE_ATTR Espfc::update(bool externalTrigger)
     if(_model.state.actuatorTimer.check())
     {
       _actuator.update();
+      _gpsRescue.update();
     }
   }
   _sensor.updateDelayed();

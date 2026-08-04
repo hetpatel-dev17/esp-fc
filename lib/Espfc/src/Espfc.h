@@ -5,6 +5,7 @@
 #include "Control/Controller.h"
 #include "Input.h"
 #include "Control/Actuator.h"
+#include "Control/GpsRescue.h"
 #include "SensorManager.h"
 #include "TelemetryManager.h"
 #include "SerialManager.h"
@@ -36,6 +37,7 @@ class Espfc
     TelemetryManager _telemetry;
     Input _input;
     Control::Actuator _actuator;
+    Control::GpsRescue _gpsRescue;
     SensorManager _sensor;
     Output::Mixer _mixer;
     Blackbox::Blackbox _blackbox;

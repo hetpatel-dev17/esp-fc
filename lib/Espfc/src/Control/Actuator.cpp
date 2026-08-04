@@ -147,6 +147,16 @@ void Actuator::updateModeMask()
   if(_model.state.failsafe.phase != FC_FAILSAFE_IDLE)
   {
     newMask |= (1 << MODE_FAILSAFE);
+
+    // Log-only foundation pass: also request GPS_RESCUE mode so GpsRescue
+    // computes/logs what it would have decided. This does NOT keep the
+    // aircraft flying — Input::failsafeStage2()'s unconditional disarm is
+    // untouched, and GpsRescue itself only runs while MODE_ARMED is still
+    // active, so once disarm takes effect (same cycle) it stops immediately.
+    if(_model.config.failsafe.procedure == FAILSAFE_PROCEDURE_GPS_RESCUE)
+    {
+      newMask |= (1 << MODE_GPS_RESCUE);
+    }
   }
 
   for(size_t i = 0; i < MODE_COUNT; i++)
@@ -175,6 +185,8 @@ bool Actuator::canActivateMode(FlightMode mode)
       return _model.state.mode.airmodeAllowed;
     case MODE_ALTHOLD:
       return _model.state.baro.dev;
+    case MODE_GPS_RESCUE:
+      return _model.state.gps.isHomeValid();
     default:
       return true;
   }
