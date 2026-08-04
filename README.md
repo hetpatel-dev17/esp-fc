@@ -2,6 +2,10 @@
 
 The mini, DIY, Low cost, ESP32 based, high performance flight controller for hobbyists.
 
+> This is a fork of [rtlopez/esp-fc](https://github.com/rtlopez/esp-fc) with an added
+> [GPS Rescue foundation](/docs/gps-rescue.md) — a Configurator-integrated, log-only
+> return-to-home guidance state machine, bench- and field-tested on real hardware.
+
 # Features
 
 * Espressif targets (ESP32, ESP32-S3)
@@ -20,6 +24,7 @@ The mini, DIY, Low cost, ESP32 based, high performance flight controller for hob
 * In flight PID Tuning
 * Buzzer, Led and voltage monitor
 * Failsafe mode
+* GPS Rescue foundation (return-to-home guidance state machine, log-only) [read more...](/docs/gps-rescue.md)
 
 # Documentation
 
@@ -110,7 +115,7 @@ You can also join our [Discord Channel](https://discord.gg/jhyPPM5UEH)
 ## Todo
 
 * Altitude Hold
-* GPS Navigation
+* ~~GPS Navigation~~ — foundation implemented, see [GPS Rescue](/docs/gps-rescue.md) (log-only; flight-enabled control loop still to do)
 * MS5611 barometer
 * Balancing robot controller
 
