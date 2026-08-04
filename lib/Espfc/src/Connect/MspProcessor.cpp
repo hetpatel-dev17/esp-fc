@@ -309,7 +309,7 @@ void MspProcessor::processCommand(MspMessage& m, MspResponse& r, Device::SerialD
       break;
 
     case MSP_BOXNAMES:
-      r.writeString("ARM;AIRMODE;ANGLE;ALTHOLD;BEEPER;FAILSAFE;BLACKBOX;BLACKBOXERASE;");
+      r.writeString("ARM;AIRMODE;ANGLE;ALTHOLD;BEEPER;FAILSAFE;BLACKBOX;BLACKBOXERASE;GPSRESCUE;");
       break;
 
     case MSP_BOXIDS:
@@ -321,6 +321,7 @@ void MspProcessor::processCommand(MspMessage& m, MspResponse& r, Device::SerialD
       r.writeU8(MODE_FAILSAFE);
       r.writeU8(MODE_BLACKBOX);
       r.writeU8(MODE_BLACKBOX_ERASE);
+      r.writeU8(MODE_GPS_RESCUE);
       break;
 
     case MSP_MODE_RANGES:
@@ -934,7 +935,7 @@ void MspProcessor::processCommand(MspMessage& m, MspResponse& r, Device::SerialD
       r.writeU16(1000);                             // failsafe_throttle
       r.writeU8(_model.config.failsafe.killSwitch); // failsafe_kill_switch
       r.writeU16(0);                                // failsafe_throttle_low_delay
-      r.writeU8(1);                                 // failsafe_procedure; default drop
+      r.writeU8(_model.config.failsafe.procedure);  // failsafe_procedure
       break;
 
     case MSP_SET_FAILSAFE_CONFIG:
@@ -943,7 +944,7 @@ void MspProcessor::processCommand(MspMessage& m, MspResponse& r, Device::SerialD
       m.readU16();                                    // failsafe_throttle
       _model.config.failsafe.killSwitch = m.readU8(); // failsafe_kill_switch
       m.readU16();                                    // failsafe_throttle_low_delay
-      m.readU8();                                     // failsafe_procedure
+      _model.config.failsafe.procedure = m.readU8();  // failsafe_procedure
       break;
 
     case MSP_RXFAIL_CONFIG:
