@@ -339,7 +339,7 @@ const Cli::Param* Cli::initialize(ModelConfig& c)
                                               "ACRO_TRAINER", "RC_SMOOTHING", "RX_SIGNAL_LOSS", "RC_SMOOTHING_RATE", "ANTI_GRAVITY", "DYN_LPF", "RX_SPEKTRUM_SPI",
                                               "DSHOT_RPM_TELEMETRY", "RPM_FILTER", "D_MIN", "AC_CORRECTION", "AC_ERROR", "DUAL_GYRO_SCALED", "DSHOT_RPM_ERRORS",
                                               "CRSF_LINK_STATISTICS_UPLINK", "CRSF_LINK_STATISTICS_PWR", "CRSF_LINK_STATISTICS_DOWN", "BARO", "GPS_RESCUE_THROTTLE_PID",
-                                              "DYN_IDLE", "FF_LIMIT", "FF_INTERPOLATED", "BLACKBOX_OUTPUT", "GYRO_SAMPLE", "RX_TIMING", nullptr };
+                                              "DYN_IDLE", "FF_LIMIT", "FF_INTERPOLATED", "BLACKBOX_OUTPUT", "GYRO_SAMPLE", "RX_TIMING", "GPS_RESCUE", nullptr };
   static const char* filterTypeChoices[] = { "PT1", "BIQUAD", "PT2", "PT3", "NOTCH", "NOTCH_DF1", "BPF", "FO", "FIR2", "MEDIAN3", "NONE", nullptr };
   static const char* alignChoices[]      = { "DEFAULT", "CW0", "CW90", "CW180", "CW270", "CW0_FLIP", "CW90_FLIP", "CW180_FLIP", "CW270_FLIP", "CUSTOM", nullptr };
   static const char* mixerTypeChoices[]  = { "NONE", "TRI", "QUADP", "QUADX", "BI",
@@ -413,6 +413,14 @@ const Cli::Param* Cli::initialize(ModelConfig& c)
       Param("gps_enable_galileo", &c.gps.enableGalileo), Param("gps_enable_beidou", &c.gps.enableBeiDou),
       Param("gps_enable_qzss", &c.gps.enableQZSS), Param("gps_enable_sbas", &c.gps.enableSBAS),
 
+      Param("gps_rescue_return_alt", &c.gpsRescue.returnAltitudeM), Param("gps_rescue_return_speed", &c.gpsRescue.returnSpeedCms),
+      Param("gps_rescue_climb_rate", &c.gpsRescue.climbRateCms), Param("gps_rescue_descend_rate", &c.gpsRescue.descendRateCms),
+      Param("gps_rescue_descent_dist", &c.gpsRescue.descentDistanceM), Param("gps_rescue_landing_alt", &c.gpsRescue.landingAltitudeM),
+      Param("gps_rescue_min_start_dist", &c.gpsRescue.minStartDistM), Param("gps_rescue_min_sats", &c.gpsRescue.minSats),
+      Param("gps_rescue_max_angle", &c.gpsRescue.maxAngleDecidegrees), Param("gps_rescue_stale_timeout", &c.gpsRescue.staleDataTimeoutMs10),
+      Param("gps_rescue_stick_override", &c.gpsRescue.stickOverrideDeflectionPct), Param("gps_rescue_allow_override", &c.gpsRescue.allowManualOverride),
+      Param("gps_rescue_sanity_checks", &c.gpsRescue.sanityChecks),
+
       Param("board_align_roll", &c.boardAlignment[0]), Param("board_align_pitch", &c.boardAlignment[1]),
       Param("board_align_yaw", &c.boardAlignment[2]),
 
@@ -462,6 +470,7 @@ const Cli::Param* Cli::initialize(ModelConfig& c)
       Param("input_14", &c.input.channel[14]), Param("input_15", &c.input.channel[15]),
 
       Param("failsafe_delay", &c.failsafe.delay), Param("failsafe_kill_switch", &c.failsafe.killSwitch),
+      Param("failsafe_procedure", &c.failsafe.procedure),
 
       Param("arming_small_angle", &c.arming.smallAngle),
 
@@ -976,6 +985,10 @@ void Cli::execute(CliCmd& cmd, Stream& s)
     {
       printGpsStatus(s, true);
     }
+  }
+  else if (strcmp(cmd.args[0], "gps_rescue") == 0)
+  {
+    printGpsRescueStatus(s);
   }
   else if (strcmp(cmd.args[0], "preset") == 0)
   {
@@ -1549,6 +1562,57 @@ void Cli::printGpsStatus(Stream& s, bool full) const
   {
     s.println("  Not set");
   }
+#endif
+}
+
+void Cli::printGpsRescueStatus(Stream& s) const
+{
+#ifndef UNIT_TEST
+  static const char* gpsRescuePhaseNames[] = { "IDLE", "INIT", "CLIMB", "RETURN", "DESCEND", "HOVER", "ABORTED" };
+  static const char* gpsRescueAbortNames[] = { "NONE", "DISARMED", "HOME_INVALID", "GPS_SATS_LOW", "GPS_STALE",
+                                                "PILOT_OVERRIDE", "TOO_CLOSE", "SANITY_DISTANCE" };
+
+  const auto& r = _model.state.gpsRescue;
+
+  s.println("GPS RESCUE STATUS (log-only foundation - does not drive motors):");
+
+  s.print("   Mode active: ");
+  s.println(_model.isModeActive(MODE_GPS_RESCUE) ? "YES" : "no");
+  s.print("   Armed:       ");
+  s.println(_model.isModeActive(MODE_ARMED) ? "YES" : "no");
+  s.print("   Home valid:  ");
+  s.println(_model.state.gps.isHomeValid() ? "YES" : "no");
+  s.print("   Sats:        ");
+  s.println(_model.state.gps.numSats);
+
+  s.print("   Phase:       ");
+  s.println(r.phase < std::size(gpsRescuePhaseNames) ? gpsRescuePhaseNames[r.phase] : "?");
+  s.print("   Abort:       ");
+  s.println(r.abortReason < std::size(gpsRescueAbortNames) ? gpsRescueAbortNames[r.abortReason] : "?");
+
+  s.print("   Dist to home:   ");
+  s.print(r.distanceToHome, 2);
+  s.println(" m");
+
+  s.print("   Target hdg:     ");
+  s.print(Utils::toDeg(r.targetHeading), 1);
+  s.println(" deg");
+
+  s.print("   Heading error:  ");
+  s.print(Utils::toDeg(r.headingError), 1);
+  s.println(" deg");
+
+  s.print("   Target lean:    ");
+  s.print(Utils::toDeg(r.targetLeanAngle), 1);
+  s.println(" deg");
+
+  s.print("   Target climb:   ");
+  s.print(r.targetClimbRate, 2);
+  s.println(" m/s");
+
+  s.print("   Target alt:     ");
+  s.print(r.targetAltitude, 2);
+  s.println(" m");
 #endif
 }
 
