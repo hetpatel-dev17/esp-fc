@@ -472,6 +472,55 @@ struct GpsState
   bool isHomeValid() const { return homeSet && fix && fixType >= 2; }
 };
 
+enum GpsRescuePhase : uint8_t
+{
+  GPS_RESCUE_PHASE_IDLE = 0,
+  GPS_RESCUE_PHASE_INIT,
+  GPS_RESCUE_PHASE_CLIMB,
+  GPS_RESCUE_PHASE_RETURN,
+  GPS_RESCUE_PHASE_DESCEND,
+  GPS_RESCUE_PHASE_HOVER,
+  GPS_RESCUE_PHASE_ABORTED,
+};
+
+enum GpsRescueAbortReason : uint8_t
+{
+  GPS_RESCUE_ABORT_NONE = 0,
+  GPS_RESCUE_ABORT_DISARMED,
+  GPS_RESCUE_ABORT_HOME_INVALID,
+  GPS_RESCUE_ABORT_GPS_SATS_LOW,
+  GPS_RESCUE_ABORT_GPS_STALE,
+  GPS_RESCUE_ABORT_PILOT_OVERRIDE,
+  GPS_RESCUE_ABORT_TOO_CLOSE,
+  GPS_RESCUE_ABORT_SANITY_DISTANCE,
+};
+
+// GPS Rescue foundation: this state is LOG-ONLY. Nothing here is consumed by
+// Controller.cpp/the mixer yet — see docs on MODE_GPS_RESCUE for scope.
+struct GpsRescueState
+{
+  GpsRescuePhase phase = GPS_RESCUE_PHASE_IDLE;
+  GpsRescueAbortReason abortReason = GPS_RESCUE_ABORT_NONE;
+
+  int32_t startLat = 0;
+  int32_t startLon = 0;
+  float startAltitude = 0;  // altitude.height snapshot at engage (INIT) time, m
+
+  uint32_t engageTimeMs = 0;
+
+  float targetAltitude = 0;   // m
+  float targetClimbRate = 0;  // m/s, sign matches altitude.vario (+up)
+  float targetHeading = 0;    // rad [0, 2pi), corrected bearing-to-home
+  float targetLeanAngle = 0;  // rad, placeholder forward-lean, clamped by config.gpsRescue.maxAngleDecidegrees
+  float headingError = 0;     // rad, wrapped [-pi, pi]
+  float distanceToHome = 0;   // m, snapshot per new-fix tick
+  float distanceToHomePrev = 0;
+
+  uint32_t lastGpsMsgTs = 0;  // gates recompute to new-fix events only
+  uint32_t lastUpdateMs = 0;
+  bool active = false;
+};
+
 // runtime data
 struct ModelState
 {
@@ -505,6 +554,7 @@ struct ModelState
   Utils::Timer telemetryTimer;
 
   ModeState mode;
+  GpsRescueState gpsRescue;
   Utils::Stats stats;
 
   int16_t debug[DEBUG_VALUE_COUNT];

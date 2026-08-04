@@ -81,6 +81,7 @@ enum FlightMode {
   MODE_FAILSAFE,
   MODE_BLACKBOX,
   MODE_BLACKBOX_ERASE,
+  MODE_GPS_RESCUE,
   MODE_COUNT,
 };
 
@@ -173,6 +174,7 @@ enum DebugMode {
   DEBUG_BLACKBOX_OUTPUT,
   DEBUG_GYRO_SAMPLE,
   DEBUG_RX_TIMING,
+  DEBUG_GPS_RESCUE,
   DEBUG_COUNT,
 };
 
@@ -516,10 +518,18 @@ struct WirelessConfig
   char pass[MAX_LEN + 1];
 };
 
+enum FailsafeProcedure : uint8_t
+{
+  FAILSAFE_PROCEDURE_AUTO_LANDING = 0,
+  FAILSAFE_PROCEDURE_DROP_IT = 1,
+  FAILSAFE_PROCEDURE_GPS_RESCUE = 2,
+};
+
 struct FailsafeConfig
 {
   uint8_t delay = 4;
   uint8_t killSwitch = 0;
+  uint8_t procedure = FAILSAFE_PROCEDURE_DROP_IT; // default preserves pre-existing hard-disarm behavior
 };
 
 struct BlackboxConfig
@@ -679,6 +689,25 @@ struct GpsConfig
   uint8_t enableSBAS = 1;        // Enable SBAS (WAAS/EGNOS)
 };
 
+// GPS Rescue foundation: tunables for the log-only guidance state machine
+// (Control::GpsRescue). Nothing here drives the mixer yet.
+struct GpsRescueConfig
+{
+  int16_t returnAltitudeM = 30;       // climb-to altitude above engage point, m
+  int16_t returnSpeedCms = 800;       // cruise groundspeed target during RETURN, cm/s
+  int16_t climbRateCms = 150;         // climb rate during CLIMB, cm/s
+  int16_t descendRateCms = 100;       // descent rate during DESCEND, cm/s
+  int16_t descentDistanceM = 20;      // RETURN->DESCEND transition distance from home, m
+  int16_t maxAngleDecidegrees = 300;  // clamp on computed lean-angle target, 0.1 deg units
+  uint8_t landingAltitudeM = 3;       // DESCEND->HOVER transition altitude above engage point, m
+  uint8_t minStartDistM = 5;          // abort if engaged within this distance of home, m
+  uint8_t minSats = 8;                // required sat count to engage/continue
+  uint8_t staleDataTimeoutMs10 = 100; // x10ms units -> default 1000ms GPS-staleness abort
+  uint8_t stickOverrideDeflectionPct = 20; // % RPY stick deflection treated as pilot override
+  uint8_t allowManualOverride = 1;
+  uint8_t sanityChecks = 1;           // enable distance-not-decreasing sanity abort
+};
+
 struct LedConfig
 {
   uint8_t invert = 0;
@@ -706,6 +735,7 @@ class ModelConfig
     IBatConfig ibat;
     VtxConfig vtx;
     GpsConfig gps;
+    GpsRescueConfig gpsRescue;
     ArmingConfig arming;
 
     ActuatorCondition conditions[ACTUATOR_CONDITIONS];
