@@ -133,6 +133,36 @@ public:
       MixerEntry(MIXER_SOURCE_YAW,    0,  100), MixerEntry(MIXER_SOURCE_YAW,    1,  -100),
       MixerEntry() // terminator
     };
+
+    // hexacopter X mixer (values match Betaflight's mixerHex6X, sin(60)=0.866025 rounded to 87)
+    static MixerEntry mixesHex6X[] = {
+      // RearR                                  FrontR                                    RearL                                     FrontL                                    Right                                    Left
+      MixerEntry(MIXER_SOURCE_ROLL,   0,  -50), MixerEntry(MIXER_SOURCE_ROLL,   1,  -50), MixerEntry(MIXER_SOURCE_ROLL,   2,   50), MixerEntry(MIXER_SOURCE_ROLL,   3,   50), MixerEntry(MIXER_SOURCE_ROLL,   4, -100), MixerEntry(MIXER_SOURCE_ROLL,   5,  100),
+      MixerEntry(MIXER_SOURCE_PITCH,  0,   87), MixerEntry(MIXER_SOURCE_PITCH,  1,  -87), MixerEntry(MIXER_SOURCE_PITCH,  2,   87), MixerEntry(MIXER_SOURCE_PITCH,  3,  -87), MixerEntry(MIXER_SOURCE_PITCH,  4,    0), MixerEntry(MIXER_SOURCE_PITCH,  5,    0),
+      MixerEntry(MIXER_SOURCE_YAW,    0,  100), MixerEntry(MIXER_SOURCE_YAW,    1,  100), MixerEntry(MIXER_SOURCE_YAW,    2, -100), MixerEntry(MIXER_SOURCE_YAW,    3, -100), MixerEntry(MIXER_SOURCE_YAW,    4, -100), MixerEntry(MIXER_SOURCE_YAW,    5,  100),
+      MixerEntry(MIXER_SOURCE_THRUST, 0,  100), MixerEntry(MIXER_SOURCE_THRUST, 1,  100), MixerEntry(MIXER_SOURCE_THRUST, 2,  100), MixerEntry(MIXER_SOURCE_THRUST, 3,  100), MixerEntry(MIXER_SOURCE_THRUST, 4,  100), MixerEntry(MIXER_SOURCE_THRUST, 5,  100),
+      MixerEntry() // terminator
+    };
+
+    // hexacopter + mixer (values match Betaflight's mixerHex6P, sin(60)=0.866025 rounded to 87)
+    static MixerEntry mixesHex6Plus[] = {
+      // RearR                                  FrontR                                    RearL                                     FrontL                                    Front                                    Rear
+      MixerEntry(MIXER_SOURCE_ROLL,   0,  -87), MixerEntry(MIXER_SOURCE_ROLL,   1,  -87), MixerEntry(MIXER_SOURCE_ROLL,   2,   87), MixerEntry(MIXER_SOURCE_ROLL,   3,   87), MixerEntry(MIXER_SOURCE_ROLL,   4,    0), MixerEntry(MIXER_SOURCE_ROLL,   5,    0),
+      MixerEntry(MIXER_SOURCE_PITCH,  0,   50), MixerEntry(MIXER_SOURCE_PITCH,  1,  -50), MixerEntry(MIXER_SOURCE_PITCH,  2,   50), MixerEntry(MIXER_SOURCE_PITCH,  3,  -50), MixerEntry(MIXER_SOURCE_PITCH,  4, -100), MixerEntry(MIXER_SOURCE_PITCH,  5,  100),
+      MixerEntry(MIXER_SOURCE_YAW,    0,  100), MixerEntry(MIXER_SOURCE_YAW,    1, -100), MixerEntry(MIXER_SOURCE_YAW,    2,  100), MixerEntry(MIXER_SOURCE_YAW,    3, -100), MixerEntry(MIXER_SOURCE_YAW,    4,  100), MixerEntry(MIXER_SOURCE_YAW,    5, -100),
+      MixerEntry(MIXER_SOURCE_THRUST, 0,  100), MixerEntry(MIXER_SOURCE_THRUST, 1,  100), MixerEntry(MIXER_SOURCE_THRUST, 2,  100), MixerEntry(MIXER_SOURCE_THRUST, 3,  100), MixerEntry(MIXER_SOURCE_THRUST, 4,  100), MixerEntry(MIXER_SOURCE_THRUST, 5,  100),
+      MixerEntry() // terminator
+    };
+
+    // hexacopter H mixer, legacy/uncommon flat layout (values match Betaflight's mixerHex6H)
+    static MixerEntry mixesHex6H[] = {
+      // RearR                                  FrontR                                    RearL                                     FrontL                                    Right                                    Left
+      MixerEntry(MIXER_SOURCE_ROLL,   0, -100), MixerEntry(MIXER_SOURCE_ROLL,   1, -100), MixerEntry(MIXER_SOURCE_ROLL,   2,  100), MixerEntry(MIXER_SOURCE_ROLL,   3,  100), MixerEntry(MIXER_SOURCE_ROLL,   4,    0), MixerEntry(MIXER_SOURCE_ROLL,   5,    0),
+      MixerEntry(MIXER_SOURCE_PITCH,  0,  100), MixerEntry(MIXER_SOURCE_PITCH,  1, -100), MixerEntry(MIXER_SOURCE_PITCH,  2,  100), MixerEntry(MIXER_SOURCE_PITCH,  3, -100), MixerEntry(MIXER_SOURCE_PITCH,  4,    0), MixerEntry(MIXER_SOURCE_PITCH,  5,    0),
+      MixerEntry(MIXER_SOURCE_YAW,    0, -100), MixerEntry(MIXER_SOURCE_YAW,    1,  100), MixerEntry(MIXER_SOURCE_YAW,    2,  100), MixerEntry(MIXER_SOURCE_YAW,    3, -100), MixerEntry(MIXER_SOURCE_YAW,    4,    0), MixerEntry(MIXER_SOURCE_YAW,    5,    0),
+      MixerEntry(MIXER_SOURCE_THRUST, 0,  100), MixerEntry(MIXER_SOURCE_THRUST, 1,  100), MixerEntry(MIXER_SOURCE_THRUST, 2,  100), MixerEntry(MIXER_SOURCE_THRUST, 3,  100), MixerEntry(MIXER_SOURCE_THRUST, 4,  100), MixerEntry(MIXER_SOURCE_THRUST, 5,  100),
+      MixerEntry() // terminator
+    };
     // clang-format on
 
     switch (mixer)
@@ -148,6 +178,15 @@ public:
 
       case FC_MIXER_GIMBAL:
         return MixerConfig(2, mixesGimbal);
+
+      case FC_MIXER_HEX6X:
+        return MixerConfig(6, mixesHex6X);
+
+      case FC_MIXER_HEX6:
+        return MixerConfig(6, mixesHex6Plus);
+
+      case FC_MIXER_HEX6H:
+        return MixerConfig(6, mixesHex6H);
 
       case FC_MIXER_CUSTOM:
       case FC_MIXER_CUSTOM_TRI:
